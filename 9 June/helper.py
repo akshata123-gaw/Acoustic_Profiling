@@ -3,7 +3,7 @@ import tensorflow as tf
 import librosa
 import os
 import numpy as np
-model = tf.keras.models.load_model(os.path.join("models", "model.h5"))
+model = tf.keras.models.load_model(os.path.join("models", "model_new.h5"))
 
 classes = ['bear_fault', 'gear_fault',  'normal_machine']
 
@@ -14,15 +14,16 @@ def getAudio(file):
     return audio, sr
 
 def denoiseAudio(y, sr):
-    S_full = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=2048, hop_length=1024)
+    S_full, phase = librosa.magphase(librosa.stft(y))
     S_filter = librosa.decompose.nn_filter(S_full,
-                                       aggregate=np.median,
-                                       metric='cosine',
-                                       width=int(librosa.time_to_frames(1, sr=sr)))
+                                    aggregate=np.median,
+                                    metric='cosine',
+                                    width=int(librosa.time_to_frames(1, sr=sr)))
 
     S_filter = np.minimum(S_full, S_filter)
     S = librosa.feature.inverse.mel_to_stft(S_filter)
     y = librosa.griffinlim(S)
+    
     return y, sr
 
 
